@@ -348,7 +348,7 @@ struct metadata_section {
 };
 
 hobject_t infos_oid = OSD::make_infos_oid();
-ghobject_t pgmeta_oid, log_oid;
+ghobject_t log_oid;
 hobject_t biginfo_oid;
 
 int file_fd = fd_none;
@@ -438,9 +438,10 @@ int get_log(ObjectStore *fs, __u8 struct_ver,
   map<eversion_t, hobject_t> divergent_priors;
   try {
     ostringstream oss;
+    assert(struct_ver > 0);
     PGLog::read_log(fs, coll,
 		    struct_ver >= 8 ? coll : META_COLL,
-		    struct_ver >= 8 ? pgmeta_oid : log_oid,
+		    struct_ver >= 8 ? pgid.make_pgmeta_oid() : log_oid,
 		    info, divergent_priors, log, missing, oss);
     if (debug && oss.str().size())
       cerr << oss.str() << std::endl;
@@ -627,7 +628,7 @@ int write_pg(ObjectStore::Transaction &t, epoch_t epoch, pg_info_t &info,
     return ret;
   map<eversion_t, hobject_t> divergent_priors;
   coll_t coll(info.pgid);
-  PGLog::write_log(t, log, coll, pgmeta_oid, divergent_priors);
+  PGLog::write_log(t, log, coll, info.pgid.make_pgmeta_oid(), divergent_priors);
   return 0;
 }
 
@@ -1403,7 +1404,7 @@ int do_import(ObjectStore *store, OSDSuperblock& sb)
     return 1;
   }
 
-  pgmeta_oid = pgid.make_pgmeta_oid();
+  ghobject_t pgmeta_oid = pgid.make_pgmeta_oid();
   log_oid = OSD::make_pg_log_oid(pgid);
   biginfo_oid = OSD::make_pg_biginfo_oid(pgid);
 
