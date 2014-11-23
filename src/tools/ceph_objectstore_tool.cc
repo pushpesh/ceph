@@ -1481,7 +1481,8 @@ int do_list(ObjectStore *store, coll_t coll, Formatter *formatter)
       return r;
     for (vector<ghobject_t>::iterator i = objects.begin();
 	 i != objects.end(); ++i) {
-
+      if (i->is_pgmeta())
+	continue;
       formatter->open_object_section("list");
       i->dump(formatter);
       formatter->close_section();
